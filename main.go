@@ -5,33 +5,7 @@ import (
 	"math/rand"
 )
 
-func getName()string{
-	name := ""
 
-	fmt.Println("Welcome to Shil's Casino...")
-	fmt.Printf("Enter your name:")
-	_,err:=fmt.Scanln(&name)
-	if err !=nil{
-		return ""
-	}
-	fmt.Printf("Welcome %s, lets play \n ", name)
-	return name
-}
-
-func getBet(balance uint)uint{
-	var bet uint
-	for true{
-		fmt.Printf("Enter your bet, or 0 to quit (balance=%d): ",balance)
-		fmt.Scan(&bet)
-		if bet>balance{
-			fmt.Println("Bet cannot be larger than balance")
-		}else{
-			break
-		}
-	}
-	return bet;
-
-}
 
 func generateSymbolArray(symbols map[string]uint)[]string{
 	symbolArr :=[]string{}
@@ -70,6 +44,26 @@ func getSpin(reel[]string,rows int,cols int)[][]string{
 	return result
 }
 
+func checkWin(spin[][]string, multipliers map[string]uint)[]uint{
+	lines := []uint{}
+	for _, row :=range spin{
+		win:=true
+		checkSymbol:=row[0]
+		for _, symbol:=range row[1:]{
+			if checkSymbol!=symbol{
+				win=false
+				break
+			}
+		}
+		if win{
+			lines = append(lines, multipliers[checkSymbol])
+		}else{
+			lines=append(lines, 0)
+		}
+	}
+	return lines
+}
+
 func printSpin(spin[][]string){
 	for _,row:=range spin{
 		for j, symbol:=range row{
@@ -92,28 +86,37 @@ func main()  {
 		"D":20,
 	}
 	symbolsArr :=generateSymbolArray(symbols)
-	// multipliers:=map[string]uint{
-	// 	"A":20,
-	// 	"B":10,
-	// 	"C":5,
-	// 	"D":2,
+	multipliers:=map[string]uint{
+		"A":20,
+		"B":10,
+		"C":5,
+		"D":2,
 		
-	// }
+	}
 
 
 	balance := uint(200) 
-	getBet(balance)
-	getName()
+	GetBet(balance)
+	GetName()
 
 	for balance>0{
 		
-		bet:=getBet(uint(balance))
+		bet:=GetBet(uint(balance))
 		if(bet==0){
 			break
 		}
 		balance-=bet
 		spin:=getSpin(symbolsArr,3,3)
 		printSpin(spin)
+		winningSpin:=checkWin(spin,multipliers)
+		for i, multi:=range winningSpin{
+			win:=multi*bet
+			balance +=win
+			if multi>0{
+				fmt.Printf("Won $%d, (%dx) on line #%d\n ", win,multi,i+1)
+			}
+		}
+
 		}
 
 		fmt.Printf("You left with, %d\n",balance)
